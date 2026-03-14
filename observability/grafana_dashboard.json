@@ -1,0 +1,125 @@
+{
+  "title": "GenAI Financial Assistant – Platform Overview",
+  "uid": "genai-financial-assistant",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "API Gateway – Requests/s",
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+      "targets": [
+        {
+          "expr": "rate(http_requests_total{job=\"api-gateway\"}[1m])",
+          "legendFormat": "req/s"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "API Gateway – P95 Latency (ms)",
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=\"api-gateway\"}[5m])) * 1000",
+          "legendFormat": "p95 latency ms"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "RAG Service – Queries/s",
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+      "targets": [
+        {
+          "expr": "rate(http_requests_total{job=\"rag-service\", handler=\"/query\"}[1m])",
+          "legendFormat": "queries/s"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Agent Service – Agent Runs/s",
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+      "targets": [
+        {
+          "expr": "rate(http_requests_total{job=\"agent-service\", handler=\"/agent/run\"}[1m])",
+          "legendFormat": "agent runs/s"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "RAG Query Latency (ms) – P50 / P95 / P99",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket{job=\"rag-service\"}[5m])) * 1000",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=\"rag-service\"}[5m])) * 1000",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{job=\"rag-service\"}[5m])) * 1000",
+          "legendFormat": "p99"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Service Error Rate",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+      "targets": [
+        {
+          "expr": "rate(http_requests_total{status=~\"5..\", job=\"api-gateway\"}[5m])",
+          "legendFormat": "api-gateway 5xx"
+        },
+        {
+          "expr": "rate(http_requests_total{status=~\"5..\", job=\"rag-service\"}[5m])",
+          "legendFormat": "rag-service 5xx"
+        },
+        {
+          "expr": "rate(http_requests_total{status=~\"5..\", job=\"agent-service\"}[5m])",
+          "legendFormat": "agent-service 5xx"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Documents Ingested (cumulative)",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+      "targets": [
+        {
+          "expr": "ingestion_documents_total",
+          "legendFormat": "total documents"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "piechart",
+      "title": "Agent Type Distribution",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+      "targets": [
+        {
+          "expr": "sum by (agent_type) (agent_runs_total)",
+          "legendFormat": "{{agent_type}}"
+        }
+      ]
+    }
+  ]
+}

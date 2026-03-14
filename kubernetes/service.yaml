@@ -1,0 +1,177 @@
+---
+# Kubernetes Services for all GenAI Financial Assistant microservices
+
+# -----------------------------------------------------------------------
+# API Gateway – External LoadBalancer
+# -----------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  labels:
+    app: api-gateway
+spec:
+  type: LoadBalancer
+  selector:
+    app: api-gateway
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+      protocol: TCP
+
+---
+# -----------------------------------------------------------------------
+# Ingestion Service – ClusterIP (internal)
+# -----------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: ingestion-service
+  labels:
+    app: ingestion-service
+spec:
+  type: ClusterIP
+  selector:
+    app: ingestion-service
+  ports:
+    - name: http
+      port: 8001
+      targetPort: 8001
+
+---
+# -----------------------------------------------------------------------
+# RAG Service – ClusterIP (internal)
+# -----------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: rag-service
+  labels:
+    app: rag-service
+spec:
+  type: ClusterIP
+  selector:
+    app: rag-service
+  ports:
+    - name: http
+      port: 8002
+      targetPort: 8002
+
+---
+# -----------------------------------------------------------------------
+# Graph Service – ClusterIP (internal)
+# -----------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: graph-service
+  labels:
+    app: graph-service
+spec:
+  type: ClusterIP
+  selector:
+    app: graph-service
+  ports:
+    - name: http
+      port: 8003
+      targetPort: 8003
+
+---
+# -----------------------------------------------------------------------
+# Agent Service – ClusterIP (internal)
+# -----------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: agent-service
+  labels:
+    app: agent-service
+spec:
+  type: ClusterIP
+  selector:
+    app: agent-service
+  ports:
+    - name: http
+      port: 8004
+      targetPort: 8004
+
+---
+# -----------------------------------------------------------------------
+# Neo4j – ClusterIP (internal)
+# -----------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: neo4j-service
+  labels:
+    app: neo4j
+spec:
+  type: ClusterIP
+  selector:
+    app: neo4j
+  ports:
+    - name: bolt
+      port: 7687
+      targetPort: 7687
+    - name: http
+      port: 7474
+      targetPort: 7474
+
+---
+# -----------------------------------------------------------------------
+# ChromaDB – ClusterIP (internal)
+# -----------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: chromadb-service
+  labels:
+    app: chromadb
+spec:
+  type: ClusterIP
+  selector:
+    app: chromadb
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+
+---
+# -----------------------------------------------------------------------
+# Prometheus – ClusterIP
+# -----------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  labels:
+    app: prometheus
+spec:
+  type: ClusterIP
+  selector:
+    app: prometheus
+  ports:
+    - name: http
+      port: 9090
+      targetPort: 9090
+
+---
+# -----------------------------------------------------------------------
+# Grafana – NodePort (accessible for monitoring)
+# -----------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  labels:
+    app: grafana
+spec:
+  type: NodePort
+  selector:
+    app: grafana
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+      nodePort: 30300

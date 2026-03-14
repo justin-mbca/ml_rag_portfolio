@@ -1,0 +1,274 @@
+---
+# Kubernetes Deployments for all GenAI Financial Assistant microservices
+
+# -----------------------------------------------------------------------
+# Ingestion Service
+# -----------------------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ingestion-service
+  labels:
+    app: ingestion-service
+    component: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ingestion-service
+  template:
+    metadata:
+      labels:
+        app: ingestion-service
+    spec:
+      containers:
+        - name: ingestion-service
+          image: ghcr.io/justin-mbca/ml_rag_portfolio/ingestion-service:latest
+          ports:
+            - containerPort: 8001
+          env:
+            - name: UPLOAD_DIR
+              value: /tmp/uploads
+            - name: S3_BUCKET
+              valueFrom:
+                secretKeyRef:
+                  name: aws-secrets
+                  key: s3-bucket
+                  optional: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8001
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8001
+            initialDelaySeconds: 30
+            periodSeconds: 30
+
+---
+# -----------------------------------------------------------------------
+# RAG Service
+# -----------------------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rag-service
+  labels:
+    app: rag-service
+    component: backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: rag-service
+  template:
+    metadata:
+      labels:
+        app: rag-service
+    spec:
+      containers:
+        - name: rag-service
+          image: ghcr.io/justin-mbca/ml_rag_portfolio/rag-service:latest
+          ports:
+            - containerPort: 8002
+          env:
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openai-secrets
+                  key: api-key
+            - name: CHROMA_HOST
+              value: chromadb-service
+            - name: NEO4J_URI
+              value: bolt://neo4j-service:7687
+            - name: NEO4J_USER
+              value: neo4j
+            - name: NEO4J_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: neo4j-secrets
+                  key: password
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 2Gi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8002
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8002
+            initialDelaySeconds: 45
+            periodSeconds: 30
+
+---
+# -----------------------------------------------------------------------
+# Graph Service
+# -----------------------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: graph-service
+  labels:
+    app: graph-service
+    component: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: graph-service
+  template:
+    metadata:
+      labels:
+        app: graph-service
+    spec:
+      containers:
+        - name: graph-service
+          image: ghcr.io/justin-mbca/ml_rag_portfolio/graph-service:latest
+          ports:
+            - containerPort: 8003
+          env:
+            - name: NEO4J_URI
+              value: bolt://neo4j-service:7687
+            - name: NEO4J_USER
+              value: neo4j
+            - name: NEO4J_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: neo4j-secrets
+                  key: password
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8003
+            initialDelaySeconds: 10
+            periodSeconds: 10
+
+---
+# -----------------------------------------------------------------------
+# Agent Service
+# -----------------------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agent-service
+  labels:
+    app: agent-service
+    component: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: agent-service
+  template:
+    metadata:
+      labels:
+        app: agent-service
+    spec:
+      containers:
+        - name: agent-service
+          image: ghcr.io/justin-mbca/ml_rag_portfolio/agent-service:latest
+          ports:
+            - containerPort: 8004
+          env:
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openai-secrets
+                  key: api-key
+            - name: RAG_SERVICE_URL
+              value: http://rag-service:8002
+            - name: GRAPH_SERVICE_URL
+              value: http://graph-service:8003
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 2Gi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8004
+            initialDelaySeconds: 15
+            periodSeconds: 10
+
+---
+# -----------------------------------------------------------------------
+# API Gateway
+# -----------------------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  labels:
+    app: api-gateway
+    component: gateway
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: ghcr.io/justin-mbca/ml_rag_portfolio/api-gateway:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: INGESTION_SERVICE_URL
+              value: http://ingestion-service:8001
+            - name: RAG_SERVICE_URL
+              value: http://rag-service:8002
+            - name: GRAPH_SERVICE_URL
+              value: http://graph-service:8003
+            - name: AGENT_SERVICE_URL
+              value: http://agent-service:8004
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 30

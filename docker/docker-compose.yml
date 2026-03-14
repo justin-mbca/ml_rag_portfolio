@@ -1,0 +1,182 @@
+version: "3.9"
+
+services:
+  # -----------------------------------------------------------------------
+  # Infrastructure
+  # -----------------------------------------------------------------------
+  neo4j:
+    image: neo4j:5.19
+    environment:
+      NEO4J_AUTH: "neo4j/password"
+      NEO4J_PLUGINS: '["apoc"]'
+    ports:
+      - "7474:7474"   # Browser
+      - "7687:7687"   # Bolt
+    volumes:
+      - neo4j_data:/data
+    healthcheck:
+      test: ["CMD", "neo4j", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  chromadb:
+    image: chromadb/chroma:latest
+    ports:
+      - "8005:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: genai_financial
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # -----------------------------------------------------------------------
+  # Application Services
+  # -----------------------------------------------------------------------
+  ingestion-service:
+    build:
+      context: ../services/ingestion-service
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      UPLOAD_DIR: /tmp/uploads
+      S3_BUCKET: ${S3_BUCKET:-}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+    volumes:
+      - uploads:/tmp/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+
+  rag-service:
+    build:
+      context: ../services/rag-service
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      CHROMA_HOST: chromadb
+      CHROMA_PORT: 8000
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASSWORD: password
+    depends_on:
+      chromadb:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+    restart: on-failure
+
+  graph-service:
+    build:
+      context: ../services/graph-service
+      dockerfile: Dockerfile
+    ports:
+      - "8003:8003"
+    environment:
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASSWORD: password
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    restart: on-failure
+
+  agent-service:
+    build:
+      context: ../services/agent-service
+      dockerfile: Dockerfile
+    ports:
+      - "8004:8004"
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      RAG_SERVICE_URL: http://rag-service:8002
+      GRAPH_SERVICE_URL: http://graph-service:8003
+    depends_on:
+      - rag-service
+      - graph-service
+    restart: on-failure
+
+  api-gateway:
+    build:
+      context: ../services/api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      INGESTION_SERVICE_URL: http://ingestion-service:8001
+      RAG_SERVICE_URL: http://rag-service:8002
+      GRAPH_SERVICE_URL: http://graph-service:8003
+      AGENT_SERVICE_URL: http://agent-service:8004
+      HTTP_TIMEOUT: "30.0"
+    depends_on:
+      - ingestion-service
+      - rag-service
+      - graph-service
+      - agent-service
+    restart: on-failure
+
+  # -----------------------------------------------------------------------
+  # Observability
+  # -----------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ../observability/prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ../observability/grafana_dashboard.json:/etc/grafana/provisioning/dashboards/genai_financial.json:ro
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+volumes:
+  neo4j_data:
+  chroma_data:
+  redis_data:
+  postgres_data:
+  uploads:
+  grafana_data:

@@ -1,0 +1,6 @@
+Architecture diagram placeholder – replace with actual PNG image.
+
+To generate the architecture diagram, run:
+  python scripts/generate_diagram.py
+
+Or use the draw.io file at docs/architecture.drawio

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: genai-platform
+  labels:
+    app.kubernetes.io/name: genai-platform
+    app.kubernetes.io/managed-by: kubectl

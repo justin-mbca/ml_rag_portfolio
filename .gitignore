@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# ML models (generated artifacts - train locally using models/training/train_risk_classifier.py)
+models/saved_models/*.joblib
+models/saved_models/*.pkl
+# (keep .gitkeep to preserve directory structure)
+!models/saved_models/.gitkeep
+
+# Notebooks output
+notebooks/*.png
+notebooks/.ipynb_checkpoints/
+
+# Docker
+docker/.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Kubernetes secrets (never commit)
+*-secret.yaml
+secrets.yaml

@@ -1,0 +1,72 @@
+ANTI-MONEY LAUNDERING (AML) REGULATIONS - SAMPLE DOCUMENT
+===========================================================
+
+1. INTRODUCTION
+
+Anti-Money Laundering (AML) regulations are a set of laws, regulations, and procedures
+intended to prevent criminals from disguising illegally obtained funds as legitimate income.
+Financial institutions are required to comply with AML regulations established by bodies
+such as the Financial Action Task Force (FATF), FinCEN (USA), FCA (UK), and local regulators.
+
+2. KEY AML COMPLIANCE REQUIREMENTS
+
+2.1 Customer Due Diligence (CDD)
+Financial institutions must:
+- Identify and verify the identity of customers
+- Identify beneficial owners
+- Understand the nature and purpose of customer relationships
+- Conduct ongoing monitoring of transactions
+
+2.2 Know Your Customer (KYC)
+All financial institutions must implement robust KYC procedures including:
+- Identity verification using government-issued documents
+- Address verification
+- Politically Exposed Person (PEP) screening
+- Sanctions list screening (OFAC, UN, EU)
+
+2.3 Suspicious Activity Reporting (SAR)
+Institutions are required to:
+- Monitor transactions for suspicious activity
+- File Suspicious Activity Reports (SARs) with FinCEN within 30 days
+- Maintain SAR confidentiality
+- Implement transaction monitoring systems
+
+2.4 Record Keeping
+Financial institutions must retain:
+- Customer identification records for 5 years after account closure
+- Transaction records for 5 years
+- SAR filings and supporting documentation
+
+3. RISK CATEGORIES
+
+HIGH RISK:
+- Politically Exposed Persons (PEPs)
+- High-value transactions (>$10,000 cash)
+- Wire transfers to high-risk jurisdictions
+- Shell companies and complex ownership structures
+
+MEDIUM RISK:
+- Non-resident customers
+- Business customers in high-risk industries
+- Frequent large transactions
+
+LOW RISK:
+- Standard retail banking customers
+- Regular payroll deposits
+- Government entities
+
+4. PENALTIES FOR NON-COMPLIANCE
+
+Violations of AML regulations can result in:
+- Civil monetary penalties up to $1,000,000 per violation
+- Criminal prosecution for responsible officers
+- Regulatory enforcement actions
+- Reputational damage
+
+5. TECHNOLOGY REQUIREMENTS
+
+Modern AML programs should leverage:
+- AI/ML-based transaction monitoring
+- Graph analytics for network analysis
+- Real-time screening systems
+- Automated SAR generation

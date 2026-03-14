@@ -1,0 +1,82 @@
+{
+  "id": null,
+  "uid": "genai-platform-overview",
+  "title": "GenAI Financial Platform - Overview",
+  "tags": ["genai", "financial", "rag"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "API Gateway - Request Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "rate(gateway_requests_total[5m])",
+          "legendFormat": "Requests/sec"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "RAG Service - Retrieve Latency (p95)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(rag_retrieve_latency_seconds_bucket[5m]))",
+          "legendFormat": "p95 Latency"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Agent QA - Request Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "rate(agent_qa_requests_total[5m])",
+          "legendFormat": "QA Requests/sec"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Ingestion - Total Files Processed",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        {
+          "expr": "ingestion_requests_total",
+          "legendFormat": "Total Ingest Requests"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Graph Service - Ingest Latency (p50)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(graph_ingest_latency_seconds_bucket[5m]))",
+          "legendFormat": "p50 Latency"
+        }
+      ]
+    }
+  ],
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  }
+}

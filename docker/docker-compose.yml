@@ -1,0 +1,173 @@
+version: "3.9"
+
+services:
+  # ─────────────── Infrastructure ───────────────
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-genai_platform}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  neo4j:
+    image: neo4j:5
+    environment:
+      NEO4J_AUTH: ${NEO4J_AUTH:-neo4j/changeme}
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j_data:/data
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "${NEO4J_PASSWORD:-changeme}", "RETURN 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  chroma:
+    image: chromadb/chroma:latest
+    ports:
+      - "8005:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      IS_PERSISTENT: "TRUE"
+
+  # ─────────────── Application Services ───────────────
+  ingestion-service:
+    build:
+      context: ../services/ingestion-service
+    ports:
+      - "8001:8001"
+    environment:
+      CHROMA_HOST: chroma
+      CHROMA_PORT: "8000"
+      COLLECTION_NAME: financial_docs
+    volumes:
+      - ../data_pipeline/sample_data:/data/sample:ro
+    depends_on:
+      - chroma
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  graph-service:
+    build:
+      context: ../services/graph-service
+    ports:
+      - "8003:8003"
+    environment:
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD:-changeme}
+    depends_on:
+      - neo4j
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  rag-service:
+    build:
+      context: ../services/rag-service
+    ports:
+      - "8002:8002"
+    environment:
+      CHROMA_HOST: chroma
+      CHROMA_PORT: "8000"
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD:-changeme}
+    depends_on:
+      - chroma
+      - neo4j
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  agent-service:
+    build:
+      context: ../services/agent-service
+    ports:
+      - "8004:8004"
+    environment:
+      RAG_SERVICE_URL: http://rag-service:8002
+      RISK_MODEL_PATH: /models/risk_model.joblib
+    volumes:
+      - ../models/saved_models:/models:ro
+    depends_on:
+      - rag-service
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  api-gateway:
+    build:
+      context: ../services/api-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      AGENT_SERVICE_URL: http://agent-service:8004
+      API_KEY: ${API_KEY:-dev-secret-key}
+    depends_on:
+      - agent-service
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ─────────────── Observability ───────────────
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ../observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ../observability/grafana:/etc/grafana/provisioning/dashboards:ro
+    depends_on:
+      - prometheus
+
+volumes:
+  postgres_data:
+  neo4j_data:
+  chroma_data:
+  grafana_data:

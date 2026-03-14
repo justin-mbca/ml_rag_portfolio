@@ -1,0 +1,31 @@
+text,risk_category
+"Customer initiated large cash deposit exceeding reporting threshold without documentation",HIGH
+"Standard payroll deposit from known employer",LOW
+"Wire transfer to offshore account in high-risk jurisdiction",HIGH
+"Regular monthly mortgage payment",LOW
+"Multiple small cash deposits below reporting threshold in single day (structuring)",HIGH
+"Direct deposit from government agency",LOW
+"Large transaction involving shell company with unclear beneficial ownership",HIGH
+"Retail purchase at supermarket",LOW
+"International wire transfer to sanctioned country",HIGH
+"Automatic bill payment for utilities",LOW
+"Customer refuses to provide source of funds documentation",HIGH
+"Small ATM withdrawal from personal account",LOW
+"Rapid movement of funds through multiple accounts",HIGH
+"Salary transfer between personal accounts",LOW
+"Customer is politically exposed person with unusual transaction patterns",HIGH
+"Purchase of government bonds through established broker",LOW
+"Anonymous cryptocurrency exchange with no KYC verification",HIGH
+"Regular insurance premium payment",LOW
+"Transaction with entity on OFAC sanctions list",HIGH
+"Employee expense reimbursement",LOW
+"Round-dollar transactions across multiple accounts on same day",HIGH
+"Monthly retirement fund contribution",LOW
+"Cash-intensive business with no plausible business explanation",HIGH
+"Recurring charitable donation to registered organization",LOW
+"Unusual pattern of third-party deposits followed by immediate withdrawals",HIGH
+"Standard student loan disbursement",LOW
+"Customer provides false identification documents",HIGH
+"Automatic savings plan deposit",LOW
+"Layering through complex chain of domestic and international transfers",HIGH
+"Regular rent payment to landlord",LOW

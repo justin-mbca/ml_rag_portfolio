@@ -103,6 +103,7 @@ ml_rag_portfolio/
 │   └── docker-compose.yml
 ├── docs/
 │   ├── architecture.md
+│   ├── cloud_services.md
 │   ├── deployment.md
 │   └── run_local.md
 ├── kubernetes/
@@ -215,6 +216,12 @@ pytest tests/integration/ -v
 # All tests
 pytest tests/ -v
 ```
+
+---
+
+## ☁️ Cloud Services
+
+See [docs/cloud_services.md](docs/cloud_services.md) for a full breakdown of required and optional cloud services (container registry, Kubernetes cluster, managed databases, LLM APIs, and more).
 
 ---
 
